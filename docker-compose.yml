@@ -1,3 +1,6 @@
+volumes:
+  api_vendor:
+
 services:
   cache:
     image: redis:4-alpine
@@ -40,6 +43,8 @@ services:
       target: scheduler-dev
     volumes:
       - ./api:/fleetbase/api
+      - api_vendor:/fleetbase/api/vendor
+      - ./docker/crontab:/fleetbase/api/crontab
     command: ["go-crond", "--verbose", "root:./crontab"]
     environment:
       DATABASE_URL: "mysql://root@database/fleetbase"
@@ -61,6 +66,7 @@ services:
       target: events-dev
     volumes:
       - ./api:/fleetbase/api
+      - api_vendor:/fleetbase/api/vendor
     command: ["php", "artisan", "queue:work"]
     healthcheck:
       test: ["CMD", "php", "artisan", "queue:status"]
@@ -87,7 +93,7 @@ services:
     volumes:
       - ./console:/console
     working_dir: /console
-    command: sh -c "pnpm install && pnpm start --port 4200 --host 0.0.0.0"
+    command: sh -c "npm install -g pnpm && pnpm install && pnpm start --port 4200 --host 0.0.0.0"
 
   # Application API - Development Configuration
   # Builds from local docker/Dockerfile (app-dev target) and mounts ./api for live code changes.
@@ -99,6 +105,7 @@ services:
     volumes:
       - ./api/.env:/fleetbase/api/.env
       - ./api:/fleetbase/api
+      - api_vendor:/fleetbase/api/vendor
     environment:
       ENVIRONMENT: development
       DATABASE_URL: "mysql://root@database/fleetbase"
